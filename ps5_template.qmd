@@ -51,6 +51,9 @@ alt.renderers.enable("png")
 
 import requests
 from bs4 import BeautifulSoup
+
+from datetime import datetime
+from urllib.parse import urljoin
 ```
 
 
@@ -112,7 +115,7 @@ for link in data['Link']:
     agency_name = 'N/A'
     
     # Locate the <ul> tag containing the details
-    details_list = agency_soup.find('ul', class_='usa-list usa-list--unstyled margin-y-2')
+    details_list = detail_soup.find('ul', class_='usa-list usa-list--unstyled margin-y-2')
     if details_list:
         for li in details_list.find_all('li'):
             label_span = li.find('span', class_='padding-right-2 text-base')
@@ -136,18 +139,143 @@ print(data.head())
 ### 1. Turning the scraper into a function 
 
 * a. Pseudo-Code (PARTNER 2)
-
+1. start function and taking month+year as inputs
+2. if year is < 2013, return false
+3. if year is >= 2013
+  a. create empty lists to store title, date, category, agency, link
+  b. create a int for page number
+  c. while loop on page
+      - for loop on item
+        - check if extract date match the input, 
+        - if yes, break
+        - extract info
+        - go to detail page and extract agency 
+  d. wait 1 second and flip
 
 * b. Create Dynamic Scraper (PARTNER 2)
 
 ```{python}
+def ScrapeEnforcement(month, year):
+  input_date = datetime(year, month, 1)
 
+  if year < 2013:
+    print("Please enter a year of 2013 or later. Data is only available from 2013 onward.")
+    return None
+
+  base_url = 'https://oig.hhs.gov/fraud/enforcement/'
+
+  # create lists to store info
+  titles = []
+  dates = []
+  categories = []
+  links = []
+  agencies = []
+
+  page = 1
+
+  # loop over pages
+  while True:
+    url = f"{base_url}?page={page}"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'lxml')
+
+    # loop over enforcements
+    for item in soup.find_all('li', class_='usa-card card--list pep-card--minimal mobile:grid-col-12'):
+      # checking and compareing date      
+      date_str = item.find('span', class_='text-base-dark padding-right-105').text.strip()
+      date = datetime.strptime(date_str, "%B %d, %Y") # convert to datetime
+
+      if date < input_date:
+        df_enforcement = pd.DataFrame({
+          'Title': titles,
+          'Date': dates,
+          'Category': categories,
+          'Link': links,
+          'Agency': agencies
+        })
+        csv = f"enforcement_actions_year_month.csv"
+        df_enforcement.to_csv(csv, index=False)
+        return df_enforcement
+
+      # Extract date
+      dates.append(date)
+
+      # Extract title
+      title_tag = item.find('h2', class_='usa-card__heading').find('a')
+      title = title_tag.text.strip()
+      titles.append(title)
+
+      # Extract link
+      link = title_tag['href']
+      full_link = urljoin('https://oig.hhs.gov', link) # Form the full URL
+      links.append(full_link)  
+
+      # Extract category
+      category_tag = item.find('ul', class_='display-inline add-list-reset').find('li')
+      category = 'N/A'
+      category = category_tag.text.strip()
+      categories.append(category)
+
+      # go to detail page
+      detail_response = requests.get(full_link)
+      detail_soup = BeautifulSoup(detail_response.content, 'lxml')
+      agency_name = 'N/A'
+        
+      # Locate the <ul> tag containing the details
+      details_list = detail_soup.find('ul', class_='usa-list usa-list--unstyled margin-y-2')
+      if details_list:
+        for li in details_list.find_all('li'):
+          label_span = li.find('span', class_='padding-right-2 text-base')
+          if label_span:
+            label_text = label_span.text.strip()
+            # Check if the label is "Date:" or "Agency:"
+            if label_text == "Agency:":
+              agency_name = label_span.find_next_sibling(text=True).strip()
+              break
+      # Append extracted data to lists
+      agencies.append(agency_name)
+      
+    # stop and flip the page
+    page += 1
+    time.sleep(1)
+
+  df_enforcement = pd.DataFrame({
+    'Title': titles,
+    'Date': dates,
+    'Category': categories,
+    'Link': links,
+    'Agency': agencies
+  })
+  csv = f"enforcement_actions_year_month.csv"
+  df_enforcement.to_csv(csv, index=False)
+  return df_enforcement
+```
+
+```{python}
+# collecting the enforcement actions since January 2023
+ScrapeEnforcement(1, 2023)
+```
+
+```{python}
+df_enforcement = pd.read_csv("enforcement_actions_year_month.csv") #DELETE IT
+print(len(df_enforcement), 'enforcement actions in final dataframe')
+
+earlist_enforcement = df_enforcement.iloc[-1]
+print('The date and details of the earliest enforcement action it scraped is',earlist_enforcement)
 ```
 
 * c. Test Partner's Code (PARTNER 1)
 
 ```{python}
+# collecting the enforcement actions since January 2021
+ScrapeEnforcement(1, 2021)
+```
 
+```{python}
+print(len(df_enforcement), 'enforcement actions in final dataframe')
+
+earlist_enforcement = df_enforcement.iloc[-1]
+print('The date and details of the earliest enforcement action it scraped is',earlist_enforcement)
 ```
 
 ## Step 3: Plot data based on scraped data
