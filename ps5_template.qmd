@@ -274,11 +274,6 @@ df_2021 = ScrapeEnforcement(1, 2021)
 ```
 
 ```{python}
-# Test code
-df_2021 = pd.read_csv("enforcement_actions_year_month.csv")
-```
-
-```{python}
 print(len(df_2021), 'enforcement actions since January 2021')
 
 earlist_enforcement = df_2021.iloc[-1]
