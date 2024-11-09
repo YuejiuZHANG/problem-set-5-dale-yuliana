@@ -65,6 +65,7 @@ from shapely import wkt
 ### 1. Scraping (PARTNER 1)
 
 ```{python}
+# First, get the url
 url = 'https://oig.hhs.gov/fraud/enforcement/'
 response = requests.get(url)
 soup = BeautifulSoup(response.content, 'lxml')
@@ -74,22 +75,23 @@ titles = []
 dates = []
 categories = []
 links = []
+
 # Find each enforcement action entry
-for item in soup.find_all('li', class_='usa-card card--list pep-card--minimal mobile:grid-col-12'):
+for item in soup.find_all('li', class_ = 'usa-card card--list pep-card--minimal mobile:grid-col-12'):
     # Extract title and link
-    title_tag = item.find('h2', class_='usa-card__heading').find('a')
+    title_tag = item.find('h2', class_ = 'usa-card__heading').find('a')
     title = title_tag.text.strip()
     link = title_tag['href']
     
     titles.append(title)
-    links.append(f'https://oig.hhs.gov{link}')  # Form the full URL
+    links.append(f'https://oig.hhs.gov{link}')  # form the full url
 
     # Extract date
-    date = item.find('span', class_='text-base-dark padding-right-105').text.strip()
+    date = item.find('span', class_ = 'text-base-dark padding-right-105').text.strip()
     dates.append(date)
 
     # Extract category
-    category_tag = item.find('ul', class_='display-inline add-list-reset').find('li')
+    category_tag = item.find('ul', class_ = 'display-inline add-list-reset').find('li')
     category = 'N/A'
     category = category_tag.text.strip()
     categories.append(category)
@@ -100,7 +102,7 @@ for item in soup.find_all('li', class_='usa-card card--list pep-card--minimal mo
     'Link': links
 })
 
-# Display the head of the DataFrame
+# Display the dataframe
 print(data.head())
 ```
 
@@ -111,17 +113,17 @@ print(data.head())
 # Part 2: Adding the Agency Name by Crawling Each Link
 agencies = []
 
-# Loop through each enforcement action's detailed page
+# Get loop through each detailed page
 for link in data['Link']:
     response = requests.get(link)
     detail_soup = BeautifulSoup(response.content, 'lxml')
     agency_name = 'N/A'
     
     # Locate the <ul> tag containing the details
-    details_list = detail_soup.find('ul', class_='usa-list usa-list--unstyled margin-y-2')
+    details_list = detail_soup.find('ul', class_ = 'usa-list usa-list--unstyled margin-y-2')
     if details_list:
         for li in details_list.find_all('li'):
-            label_span = li.find('span', class_='padding-right-2 text-base')
+            label_span = li.find('span', class_ = 'padding-right-2 text-base')
             if label_span:
                 label_text = label_span.text.strip()
                 # Check if the label is "Date:" or "Agency:"
@@ -130,10 +132,8 @@ for link in data['Link']:
     # Append extracted data to lists
     agencies.append(agency_name)
 
-# Add the date and agency names to the DataFrame
-data['Agency'] = agencies
-
 # Display the updated DataFrame
+data['Agency'] = agencies
 print(data.head())
 ```
 
@@ -183,9 +183,9 @@ def ScrapeEnforcement(month, year):
     soup = BeautifulSoup(response.content, 'lxml')
 
     # loop over enforcements
-    for item in soup.find_all('li', class_='usa-card card--list pep-card--minimal mobile:grid-col-12'):
+    for item in soup.find_all('li', class_ = 'usa-card card--list pep-card--minimal mobile:grid-col-12'):
       # checking and compareing date      
-      date_str = item.find('span', class_='text-base-dark padding-right-105').text.strip()
+      date_str = item.find('span', class_ = 'text-base-dark padding-right-105').text.strip()
       date = datetime.strptime(date_str, "%B %d, %Y") # convert to datetime
 
       if date < input_date:
@@ -197,14 +197,14 @@ def ScrapeEnforcement(month, year):
           'Agency': agencies
         })
         csv = f"enforcement_actions_year_month.csv"
-        df_enforcement.to_csv(csv, index=False)
+        df_enforcement.to_csv(csv, index = False)
         return df_enforcement
 
       # Extract date
       dates.append(date)
 
       # Extract title
-      title_tag = item.find('h2', class_='usa-card__heading').find('a')
+      title_tag = item.find('h2', class_ = 'usa-card__heading').find('a')
       title = title_tag.text.strip()
       titles.append(title)
 
@@ -214,7 +214,7 @@ def ScrapeEnforcement(month, year):
       links.append(full_link)  
 
       # Extract category
-      category_tag = item.find('ul', class_='display-inline add-list-reset').find('li')
+      category_tag = item.find('ul', class_ = 'display-inline add-list-reset').find('li')
       category = 'N/A'
       category = category_tag.text.strip()
       categories.append(category)
@@ -225,15 +225,15 @@ def ScrapeEnforcement(month, year):
       agency_name = 'N/A'
         
       # Locate the <ul> tag containing the details
-      details_list = detail_soup.find('ul', class_='usa-list usa-list--unstyled margin-y-2')
+      details_list = detail_soup.find('ul', class_ = 'usa-list usa-list--unstyled margin-y-2')
       if details_list:
         for li in details_list.find_all('li'):
-          label_span = li.find('span', class_='padding-right-2 text-base')
+          label_span = li.find('span', class_ = 'padding-right-2 text-base')
           if label_span:
             label_text = label_span.text.strip()
             # Check if the label is "Date:" or "Agency:"
             if label_text == "Agency:":
-              agency_name = label_span.find_next_sibling(text=True).strip()
+              agency_name = label_span.find_next_sibling(text = True).strip()
               break
       # Append extracted data to lists
       agencies.append(agency_name)
@@ -250,7 +250,7 @@ def ScrapeEnforcement(month, year):
     'Agency': agencies
   })
   csv = f"enforcement_actions_year_month.csv"
-  df_enforcement.to_csv(csv, index=False)
+  df_enforcement.to_csv(csv, index = False)
   return df_enforcement
 ```
 
@@ -263,7 +263,7 @@ df_2023 = ScrapeEnforcement(1, 2023)
 print(len(df), 'enforcement actions since January 2023')
 
 earlist_enforcement = df_2023.iloc[-1]
-print('The date and details of the earliest enforcement action it scraped is',earlist_enforcement)
+print('The date and details of the earliest enforcement action it scraped is', earlist_enforcement)
 ```
 
 * c. Test Partner's Code (PARTNER 1)
@@ -274,10 +274,15 @@ df_2021 = ScrapeEnforcement(1, 2021)
 ```
 
 ```{python}
+# Test code
+df_2021 = pd.read_csv("enforcement_actions_year_month.csv")
+```
+
+```{python}
 print(len(df_2021), 'enforcement actions since January 2021')
 
 earlist_enforcement = df_2021.iloc[-1]
-print('The date and details of the earliest enforcement action it scraped is',earlist_enforcement)
+print('The date and details of the earliest enforcement action it scraped is', earlist_enforcement)
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -285,25 +290,24 @@ print('The date and details of the earliest enforcement action it scraped is',ea
 ### 1. Plot the number of enforcement actions over time (PARTNER 2)
 
 ```{python}
-# extrac year month
+# Extract year month
 df_2021['Date'] = pd.to_datetime(df_2021['Date'])
 df_2021['yearmonth'] = df_2021['Date'].dt.strftime('%Y-%m')
 
-enforcement_counts = df_2021.groupby('yearmonth').size().reset_index(name='Count')
+enforcement_counts = df_2021.groupby('yearmonth').size().reset_index(name = 'Count')
 
 # Convert YearMonth to a string format
 enforcement_counts['yearmonth'] = enforcement_counts['yearmonth'].astype(str)
 
 alt.Chart(enforcement_counts).mark_line().encode(
-    x='yearmonth(yearmonth):T',
-    y='Count:Q',
-    tooltip=['yearmonth', 'Count']
+    x = 'yearmonth(yearmonth):T',
+    y = 'Count:Q',
+    tooltip = ['yearmonth', 'Count']
 ).properties(
-    title='Number of Enforcement Actions Over Time (Monthly)',
-    width=600,
-    height=400
+    title = 'Number of Enforcement Actions Over Time (Monthly)',
+    width = 400,
+    height = 200
 )
-
 ```
 
 ### 2. Plot the number of enforcement actions categorized: (PARTNER 1)
@@ -311,59 +315,59 @@ alt.Chart(enforcement_counts).mark_line().encode(
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
-# filter only two categories
-two_split = df_2021[df_2021['Category'].isin(["Criminal and Civil Actions", "State Enforcement Agencies"])]
+# Filter the data to include only the two specified categories
+filtered_df = df_2021[df_2021['Category'].isin(["Criminal and Civil Actions", "State Enforcement Agencies"])]
 
-# NOT SURE
-two_split = two_split.groupby('Category').size().reset_index(name='Count')
+# Group by'Category' and count the number of actions 
+actions_counts = filtered_df.groupby(['yearmonth','Category']).size().reset_index(name = 'Count')
 
-alt.Chart(two_split).mark_line().encode(
-    x='Category:O',
-    y='Count:Q'
+# Plotting with Altair
+alt.Chart(actions_counts).mark_line().encode(
+    x = alt.X('yearmonth(yearmonth):T', title = 'Time'),
+    y = alt.Y('Count:Q', title = 'Number of Enforcement Actions'),
+    color = 'Category:N',
 ).properties(
-    title= '"Criminal and Civil Actions" vs. "State Enforcement Agencies"',
-    width=600,
-    height=400
+    title = '"Criminal and Civil Actions" vs. "State Enforcement Agencies" Over Time',
+    width = 600,
+    height = 300
 )
-
 ```
 
 * based on five topics
 
 ```{python}
-# filter only one category
-five_topics = df_2021[df_2021['Category'].isin(["Criminal and Civil Actions"])]
+# Filter to include only "Criminal and Civil Actions" 
+five_topics_df = df_2021[df_2021['Category'] == "Criminal and Civil Actions"]
 
-topics = []
+# Define a function to assign topics 
+def assign_topic(title):
+    title = title.lower()  
+    if "bribery" in title or "corruption" in title or "kickback" in title:
+        return "Bribery/Corruption"
+    elif "financial" in title or "bank" in title or "business" in title or "billing" in title or "money" in title or "investment" in title:
+        return "Financial Fraud"
+    elif "drug" in title or "opioid" in title or "narcotics" in title:
+        return "Drug Enforcement"
+    elif "medica" in title or "health" in title:
+        return "Health Care Fraud"
+    else:
+        return "Other"
 
-for title in five_topics['Title']:
-  title = title.lower()  # Convert to lowercase for easy matching
+# Apply the topic assignment function to each title
+five_topics_df['Topic'] = five_topics_df['Title'].apply(assign_topic)
 
-  # checking key words
-  if "health care" in title or "health" in title:
-    topics.append("Health Care Fraud")
-  elif "financial" in title or "bank" in title:
-    topics.append("Financial Fraud")
-  elif "drug" in title:
-    topics.append("Drug Enforcement")
-  elif "bribery" in title or "corruption" in title:
-    topics.append("Bribery/Corruption")
-  else:
-    topics.append("Other")
+# Group by 'yearmonth' and 'Topic' and count the number of actions per topic per month
+topic_counts = five_topics_df.groupby(['yearmonth', 'Topic']).size().reset_index(name = 'Count')
 
-# append topic column
-five_topics['topics'] = topics
-
-# NOT SURE
-five_topics = five_topics.groupby('topics').size().reset_index(name='Count')
-
-alt.Chart(five_topics).mark_line().encode(
-    x='topics:O',
-    y='Count:Q'
+# Plotting with Altair
+alt.Chart(topic_counts).mark_line().encode(
+    x = alt.X('yearmonth(yearmonth):T', title = 'Date'),
+    y = alt.Y('Count:Q', title = 'Number of Enforcement Actions'),
+    color = 'Topic:N'
 ).properties(
-    title= 'Five Topics',
-    width=600,
-    height=400
+    title = 'Enforcement Actions by Topic within "Criminal and Civil Actions"',
+    width = 600,
+    height = 300
 )
 ```
 
@@ -377,10 +381,10 @@ states_count = df_2021[df_2021['Agency'].str.contains("State of", case=False, na
 len(df_2021)
 # clean the state names
 # Attribution: I ask ChatGPT how to extract district name
-states_count['NAME'] = states_count['Agency'].str.extract(r"State of (.+)", expand=False)
+states_count['NAME'] = states_count['Agency'].str.extract(r"State of (.+)", expand = False)
 
 # group by state
-states_count = states_count.groupby('NAME').size().reset_index(name='Count')
+states_count = states_count.groupby('NAME').size().reset_index(name = 'Count')
 ```
 
 ```{python}
@@ -398,14 +402,14 @@ states.plot(column = "Count", legend = True).set_axis_off()
 
 ```{python}
 # filter districts
-districts_count = df_2021[df_2021['Agency'].str.contains("District", case=False, na=False)]
+districts_count = df_2021[df_2021['Agency'].str.contains("District", case = False, na = False)]
 
 # clean the district names
 # Attribution: I ask ChatGPT how to extract district name
 districts_count['Judicial District'] = districts_count['Agency'].str.extract(r",\s*(.*District of .*)")
 
 # group by districts
-districts_count = districts_count.groupby('Judicial District').size().reset_index(name='Count')
+districts_count = districts_count.groupby('Judicial District').size().reset_index(name = 'Count')
 districts_count
 ```
 
@@ -414,7 +418,7 @@ districts_map = gpd.read_file('US_Attorney_Districts_Shapefile_simplified_202411
 
 # Convert csv to geometry
 districts_map['the_geom'] = districts_map['the_geom'].apply(wkt.loads)
-districts_map = gpd.GeoDataFrame(districts_map, geometry='the_geom')
+districts_map = gpd.GeoDataFrame(districts_map, geometry = 'the_geom')
 
 # merge them with the shapefile
 districts = districts_map.merge(districts_count, left_on = 'Judicial District', right_on = 'Judicial District', how = 'left')
